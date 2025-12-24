@@ -1,0 +1,8 @@
+{
+  "name": "ASWRXXX12",
+  "description": "A visual interface to build, test, and deploy AI-powered micro-apps without writing code.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
