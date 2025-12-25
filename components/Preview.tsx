@@ -93,12 +93,11 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
   
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Effect to scroll when loading starts or results arrive
   useEffect(() => {
-    if (isLoading && resultsRef.current) {
+    if ((isLoading || sceneResults.length > 0) && resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [isLoading]);
+  }, [isLoading, sceneResults.length > 0]);
 
   const handleFile = async (file: File) => {
     setErrorMessage(null);
@@ -127,8 +126,6 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
     const pacing = text.match(/PACING:(.*?)(MOOD:|EXPANSION:|HOOK:|$)/is)?.[1].trim() || "";
     const mood = text.match(/MOOD:(.*?)(EXPANSION:|HOOK:|PACING:|$)/is)?.[1].trim() || "";
     const expansion = text.match(/EXPANSION:(.*?)(HOOK:|PACING:|MOOD:|$)/is)?.[1].trim() || "";
-    
-    if (!hook && !pacing && !mood && !expansion) return null;
     return { hook, pacing, mood, expansion };
   };
 
@@ -148,13 +145,13 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
     const safeSceneCount = Math.min(sceneCount, 20);
 
     const prompt = `LOOK CLOSELY AT THE VIDEO FILE PROVIDED.
-    1. IDENTIFY the primary character: physical appearance, clothing, skin color, and specific traits.
-    2. CREATE a comprehensive [CHARACTER_PROFILE] in English describing those exact features to ensure 100% consistency across all generated images.
-    3. ANALYZE the video's mood and flow for the [STORY_BLUEPRINT].
-    4. DESIGN exactly ${safeSceneCount} scenes [SCENE 1] to [SCENE ${safeSceneCount}] that mirror the visual content of the video but are enhanced for high-quality generation.
-    5. PROVIDE viral [YOUTUBE_METADATA].
+    1. EXTRACT the most dominant character's exact physical identity.
+    2. CREATE a Technical Identity Spec in [CHARACTER_PROFILE] (English). Be extremely specific about facial features, hair, and clothing layers.
+    3. DESIGN ${safeSceneCount} scenes [SCENE 1] to [SCENE ${safeSceneCount}] that mirror the video's core but improve it.
+    4. ENSURE every scene description starts by reinforcing the character's identity for absolute consistency.
+    5. PROVIDE YouTube Metadata. JANGAN gunakan tanda bintang (*) pada judul, deskripsi, atau tag. Buatlah metadata yang sangat relevan dan menarik untuk audiens luas (High Virality).
     
-    STRICT RULE: Character consistency is the top priority. All scenes must use the character defined in [CHARACTER_PROFILE].`;
+    CHARACTER CONSISTENCY IS MANDATORY. The subject must never change across scenes.`;
 
     try {
       const aiResponse = await generateAIResponse(prompt, config.aiConfig, videoFile);
@@ -169,15 +166,17 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
       }
 
       const profileMatch = aiResponse.match(/\[CHARACTER_PROFILE\](.*?)(?=\[SCENE|\[YOUTUBE_METADATA\]|$)/is);
-      const charProfile = profileMatch ? profileMatch[1].trim() : "A cinematic character";
+      const charProfile = profileMatch ? profileMatch[1].trim() : "A cinematic subject";
       setCharacterProfile(charProfile);
 
       const youtubeMatch = aiResponse.match(/\[YOUTUBE_METADATA\](.*)$/is);
       if (youtubeMatch) {
         const rawMeta = youtubeMatch[1].trim();
-        const title = rawMeta.match(/Title:(.*?)(?=Description:|$)/is)?.[1].trim() || "Video Viral Baru";
-        const desc = rawMeta.match(/Description:(.*?)(?=Tags:|$)/is)?.[1].trim() || "...";
-        const tags = rawMeta.match(/Tags:(.*)$/is)?.[1].trim() || "#shorts";
+        // Remove asterisks using regex
+        const cleanRawMeta = rawMeta.replace(/\*/g, '');
+        const title = cleanRawMeta.match(/Title:(.*?)(?=Description:|$)/is)?.[1].trim() || "New Viral Video";
+        const desc = cleanRawMeta.match(/Description:(.*?)(?=Tags:|$)/is)?.[1].trim() || "...";
+        const tags = cleanRawMeta.match(/Tags:(.*)$/is)?.[1].trim() || "#shorts #viral";
         setYoutubeMetadata({ title, description: desc, tags });
       }
 
@@ -189,7 +188,7 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
       }
       
       if (scenes.length === 0) {
-        throw new Error("Gagal mendeteksi adegan. Pastikan video memiliki objek yang jelas.");
+        throw new Error("Gagal mendeteksi adegan.");
       }
 
       setSceneResults(scenes);
@@ -209,7 +208,7 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
       }
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMessage(err.message || "Gagal memproses alur cerita.");
+      setErrorMessage(err.message || "Gagal memproses.");
     }
   };
 
@@ -240,14 +239,14 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-black uppercase tracking-[0.25em]">
-              <Sparkles className="w-4 h-4" /> ASWRXXX INTELLIGENCE
+              <Sparkles className="w-4 h-4" /> ASWRXXX PRO ENGINE
             </div>
             <h1 className="text-5xl md:text-7xl font-black text-white leading-[0.9] tracking-tighter">
               ASWR<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">XXX</span> <br/>
-              <span className="text-slate-300">Video Short</span>.
+              <span className="text-slate-300">Infinite Flow</span>.
             </h1>
             <p className="text-slate-400 text-lg max-w-md leading-relaxed font-medium">
-              Transformasi konten otomatis dengan konsistensi karakter absolut. Mulailah perjalanan konten viral Anda di sini.
+              Dekonstruksi video cerdas dengan algoritma konsistensi karakter absolut untuk konten berdurasi singkat.
             </p>
           </div>
 
@@ -257,7 +256,7 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
                  <div className="w-16 h-16 bg-slate-800 rounded-3xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-indigo-600 transition-all shadow-2xl">
                    <Video className="w-8 h-8 text-indigo-400 group-hover:text-white" />
                  </div>
-                 <span className="text-slate-500 font-black uppercase tracking-widest text-xs text-center px-4">Upload Video Referensi (Max 15MB)</span>
+                 <span className="text-slate-500 font-black uppercase tracking-widest text-xs text-center px-4">Upload Master Video (Max 15MB)</span>
                  <input type="file" className="hidden" accept="video/*" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
                </label>
              ) : (
@@ -277,11 +276,11 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
         <div className="md:col-span-3 bg-gradient-to-br from-slate-900/40 to-slate-950/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-8 space-y-8 shadow-xl">
            <div className="flex items-center justify-between">
               <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Box className="w-4 h-4 text-indigo-500" /> Visual Engine Style
+                <Box className="w-4 h-4 text-indigo-500" /> Visual Aesthetic Style
               </h3>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse" />
-                <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">ASWR-CORE Standby</span>
+                <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Architect Online</span>
               </div>
            </div>
            
@@ -309,14 +308,14 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
            <div className="grid grid-cols-1 gap-4">
              <div className="space-y-4">
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                 <Layers className="w-4 h-4 text-indigo-500" /> Layar
+                 <Layers className="w-4 h-4 text-indigo-500" /> Resolution
                </h3>
                <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
                  <button onClick={() => setAspectRatio("16:9")} className={`flex items-center justify-center gap-2 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${aspectRatio === "16:9" ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>
                    <Monitor className="w-3.5 h-3.5" /> Wide
                  </button>
                  <button onClick={() => setAspectRatio("9:16")} className={`flex items-center justify-center gap-2 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${aspectRatio === "9:16" ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>
-                   <Smartphone className="w-3.5 h-3.5" /> Port
+                   <Smartphone className="w-3.5 h-3.5" /> Vertical
                  </button>
                </div>
              </div>
@@ -324,7 +323,7 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
 
            <div className="space-y-4">
              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-               <List className="w-4 h-4 text-indigo-500" /> Total Frame
+               <List className="w-4 h-4 text-indigo-500" /> Frame Count
              </h3>
              <div className="flex items-center justify-between bg-slate-950 p-2 rounded-2xl border border-slate-800 shadow-inner">
                 <button onClick={() => setSceneCount(Math.max(1, sceneCount - 1))} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-indigo-600 text-white transition-all shadow-lg active:scale-90 flex-shrink-0">
@@ -360,10 +359,8 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
         </div>
       </section>
 
-      {/* Analysis Workspace Target for Scrolling */}
       <div ref={resultsRef} className="pt-4" />
 
-      {/* Loading Skeleton during Analysis */}
       {isLoading && sceneResults.length === 0 && (
         <div className="space-y-12 py-20 flex flex-col items-center justify-center text-center animate-in fade-in duration-700">
            <div className="relative">
@@ -373,17 +370,15 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
               </div>
            </div>
            <div className="space-y-4">
-             <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Menganalisis Karakter & Alur Cerita...</h2>
-             <p className="text-slate-500 font-bold max-w-md mx-auto">ASWRXXX Engine sedang membedah visual video referensi untuk mendapatkan detail konsistensi karakter maksimal.</p>
+             <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Menganalisis Konsistensi Karakter...</h2>
+             <p className="text-slate-500 font-bold max-w-md mx-auto">Mesin ASWRXXX sedang memindai biometrik dan detail visual untuk menciptakan Master Identity Specification.</p>
            </div>
         </div>
       )}
 
-      {/* Results View */}
       {(storyBlueprint || sceneResults.length > 0) && (
         <div className="space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
           
-          {/* Creative Lab / Story Blueprint - Gradation Columns */}
           {storyBlueprint && (
             <div className="mx-4 space-y-10">
               <div className="flex items-center gap-5 mb-2">
@@ -392,72 +387,69 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
                 </div>
                 <div>
                   <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Analisis Strategis & Story Blueprint</h2>
-                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">ASWRXXX Creative Phase 01</p>
+                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">Phase 01: Algorithmic Planning</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Hook Card - RED */}
                 <div className="group relative overflow-hidden bg-gradient-to-br from-rose-600/20 via-rose-900/10 to-slate-950 border border-rose-500/20 rounded-[2.5rem] p-8 hover:border-rose-500/50 transition-all hover:-translate-y-2 shadow-2xl">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/10 blur-[80px] -mr-16 -mt-16" />
                   <h4 className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
                     <Zap className="w-4 h-4 text-rose-500" /> Viral Hook (Red)
                   </h4>
                   <p className="text-slate-100 text-sm leading-relaxed font-semibold italic relative z-10">
-                    {storyBlueprint.hook || "Menganalisis..."}
+                    {storyBlueprint.hook || "Calculating..."}
                   </p>
                 </div>
 
-                {/* Pacing Card - BLUE */}
                 <div className="group relative overflow-hidden bg-gradient-to-br from-blue-600/20 via-blue-900/10 to-slate-950 border border-blue-500/20 rounded-[2.5rem] p-8 hover:border-blue-500/50 transition-all hover:-translate-y-2 shadow-2xl">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 blur-[80px] -mr-16 -mt-16" />
                   <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
                     <Activity className="w-4 h-4 text-blue-500" /> Rhythm Master (Blue)
                   </h4>
                   <p className="text-slate-100 text-sm leading-relaxed font-semibold italic relative z-10">
-                    {storyBlueprint.pacing || "Menganalisis..."}
+                    {storyBlueprint.pacing || "Calculating..."}
                   </p>
                 </div>
 
-                {/* Mood Card - CYAN */}
                 <div className="group relative overflow-hidden bg-gradient-to-br from-cyan-600/20 via-cyan-900/10 to-slate-950 border border-cyan-500/20 rounded-[2.5rem] p-8 hover:border-cyan-500/50 transition-all hover:-translate-y-2 shadow-2xl">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-cyan-500/10 blur-[80px] -mr-16 -mt-16" />
                   <h4 className="text-[10px] font-black text-cyan-400 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
                     <Palette className="w-4 h-4 text-cyan-500" /> Visual Aura (Cyan)
                   </h4>
                   <p className="text-slate-100 text-sm leading-relaxed font-semibold italic relative z-10">
-                    {storyBlueprint.mood || "Menganalisis..."}
+                    {storyBlueprint.mood || "Calculating..."}
                   </p>
                 </div>
 
-                {/* Expansion Card - YELLOW */}
                 <div className="group relative overflow-hidden bg-gradient-to-br from-amber-600/20 via-amber-900/10 to-slate-950 border border-amber-500/20 rounded-[2.5rem] p-8 hover:border-amber-500/50 transition-all hover:-translate-y-2 shadow-2xl">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 blur-[80px] -mr-16 -mt-16" />
                   <h4 className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
                     <Maximize2 className="w-4 h-4 text-amber-500" /> Story Twist (Yellow)
                   </h4>
                   <p className="text-slate-100 text-sm leading-relaxed font-semibold italic relative z-10">
-                    {storyBlueprint.expansion || "Membangun..."}
+                    {storyBlueprint.expansion || "Calculating..."}
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Character Profile */}
           {characterProfile && (
-            <div className="mx-4 relative overflow-hidden bg-gradient-to-r from-indigo-600/10 to-purple-600/10 border border-indigo-500/20 rounded-[3rem] p-10 flex items-start gap-8 backdrop-blur-xl animate-in slide-in-from-left-10 shadow-2xl">
-               <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-2xl ring-2 ring-white/10">
-                 <CheckCircle2 className="w-8 h-8 text-white" />
+            <div className="mx-4 relative overflow-hidden bg-gradient-to-r from-cyan-600/10 to-blue-600/10 border border-cyan-500/20 rounded-[3rem] p-10 flex items-start gap-8 backdrop-blur-xl shadow-2xl ring-1 ring-cyan-500/20">
+               <div className="w-16 h-16 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-2xl ring-2 ring-white/10">
+                 <Cpu className="w-8 h-8 text-white" />
                </div>
                <div className="space-y-3 relative z-10">
-                 <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em]">AI Character Identity (Extracted)</h4>
+                 <h4 className="text-[11px] font-black text-cyan-400 uppercase tracking-[0.3em]">Master Identity Specification (Hard-Locked)</h4>
                  <p className="text-slate-200 text-xl italic font-bold leading-relaxed pr-10">"{characterProfile}"</p>
+                 <div className="flex items-center gap-2 text-[10px] text-emerald-400 font-black uppercase tracking-widest">
+                   <CheckCircle2 className="w-3 h-3" /> Synchronized across all scenes
+                 </div>
                </div>
             </div>
           )}
 
-          {/* Sequence Generation */}
           <div className="grid grid-cols-1 gap-12">
             {sceneResults.map((scene, idx) => {
               const elementId = `prompt-${idx}`;
@@ -470,7 +462,7 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/95 z-10 backdrop-blur-lg">
                         <div className="w-20 h-20 border-4 border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin" />
                         <div className="mt-8 flex flex-col items-center">
-                          <span className="text-[12px] text-slate-400 font-black uppercase tracking-[0.4em] animate-pulse">Rendering ASWRXXX Visual</span>
+                          <span className="text-[12px] text-slate-400 font-black uppercase tracking-[0.4em] animate-pulse">Rendering Master Spec</span>
                           <span className="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mt-1">FRAME {idx + 1}</span>
                         </div>
                       </div>
@@ -491,13 +483,12 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
 
                   <div className="flex-1 flex flex-col justify-between py-4 space-y-8 relative z-10">
                     <div className="space-y-8">
-                      {/* Visual Prompt Section with persistent CYAN indicator */}
                       <div className={`transition-all duration-500 rounded-[2.5rem] ${copied ? 'ring-4 ring-cyan-500/50 p-2 bg-cyan-500/5 shadow-[0_0_30px_rgba(6,182,212,0.2)]' : ''}`}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-4">
                             <div className={`w-2 h-6 rounded-full transition-colors duration-500 ${copied ? 'bg-cyan-500' : 'bg-indigo-500'}`} />
                             <span className={`text-[11px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${copied ? 'text-cyan-400 font-bold' : 'text-slate-500'}`}>
-                              {copied ? 'Visual Prompt Disalin' : 'Visual Architecture Prompt'}
+                              {copied ? 'Visual Prompt Disalin (Marked)' : 'Visual Architecture Prompt'}
                             </span>
                           </div>
                           <button 
@@ -529,11 +520,11 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
                     <div className="mt-auto flex items-center justify-between p-8 bg-slate-950/80 rounded-[2.5rem] border border-white/5 shadow-inner">
                       <div className="flex items-center gap-4">
                         <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse" />
-                        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Architected & Verified</span>
+                        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Master Identity Locked</span>
                       </div>
                       <div className="flex items-center gap-3">
                          <Palette className="w-4 h-4 text-indigo-400" />
-                         <span className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">{selectedStyle.name} Edition</span>
+                         <span className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">{selectedStyle.name} Architecture</span>
                       </div>
                     </div>
                   </div>
@@ -541,7 +532,6 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
               );
             })}
 
-            {/* YouTube Suite */}
             {youtubeMetadata && (
               <div className="relative mt-24 overflow-hidden rounded-[4.5rem] bg-gradient-to-br from-indigo-950 via-slate-950 to-purple-950 border border-white/10 shadow-2xl animate-in fade-in duration-1000">
                  <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-14 py-10 flex items-center justify-between shadow-2xl relative overflow-hidden">
@@ -551,20 +541,20 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
                        <Youtube className="w-9 h-9 text-white" />
                      </div>
                      <div>
-                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter">SEO Optimization Engine</h3>
-                       <p className="text-[12px] font-black text-indigo-200 uppercase tracking-[0.4em]">ASWRXXX Viral Algorithm Enabled</p>
+                       <h3 className="text-3xl font-black text-white uppercase tracking-tighter">SEO Analytics Core</h3>
+                       <p className="text-[12px] font-black text-indigo-200 uppercase tracking-[0.4em]">Optimized for Maximum Virality</p>
                      </div>
                    </div>
                    <button 
                     onClick={() => copyToClipboard(`${youtubeMetadata.title}\n\n${youtubeMetadata.description}\n\n${youtubeMetadata.tags}`, "all-meta")} 
                     className={`relative z-10 flex items-center gap-4 px-10 py-5 rounded-[2rem] font-black text-sm transition-all shadow-2xl hover:-translate-y-1 active:scale-95 ${
                       isCopied("all-meta") 
-                      ? 'bg-cyan-500 text-white' 
+                      ? 'bg-cyan-500 text-white shadow-cyan-500/50' 
                       : 'bg-white text-indigo-700 hover:bg-indigo-50'
                     }`}
                    >
                       {isCopied("all-meta") ? <Check className="w-6 h-6" /> : <Share2 className="w-6 h-6" />}
-                      <span>{isCopied("all-meta") ? 'BERHASIL DISALIN' : 'SALIN SEMUA ANALYTICS'}</span>
+                      <span>{isCopied("all-meta") ? 'METADATA DISALIN' : 'SALIN SEMUA ANALYTICS'}</span>
                    </button>
                  </div>
 
@@ -572,8 +562,8 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-14">
                      <div className="space-y-12">
                        <div className="space-y-5">
-                         <label className="flex items-center gap-4 text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]"><TypeIcon className="w-5 h-5 text-indigo-500" /> Viral Title</label>
-                         <div className={`group relative bg-slate-950/80 border rounded-[2.5rem] p-10 transition-all ${isCopied("title") ? 'border-cyan-500/50' : 'border-white/5 shadow-inner'}`}>
+                         <label className="flex items-center gap-4 text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]"><TypeIcon className="w-5 h-5 text-indigo-500" /> Strategic Title</label>
+                         <div className={`group relative bg-slate-950/80 border rounded-[2.5rem] p-10 transition-all ${isCopied("title") ? 'border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.1)]' : 'border-white/5 shadow-inner'}`}>
                            <p className={`text-3xl font-black leading-tight ${isCopied("title") ? 'text-cyan-300' : 'text-white'}`}>{youtubeMetadata.title}</p>
                            <button onClick={() => copyToClipboard(youtubeMetadata.title, "title")} className="absolute top-6 right-6 p-4 opacity-0 group-hover:opacity-100 transition-all bg-slate-800 hover:bg-indigo-600 rounded-2xl text-slate-400 hover:text-white shadow-2xl">
                              {isCopied("title") ? <Check className="w-5 h-5 text-cyan-400" /> : <Copy className="w-5 h-5" />}
@@ -581,17 +571,20 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
                          </div>
                        </div>
                        <div className="space-y-5">
-                         <label className="flex items-center gap-4 text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]"><Hash className="w-5 h-5 text-indigo-500" /> SEO Tags</label>
-                         <div className={`bg-slate-950/80 border rounded-[2.5rem] p-8 flex flex-wrap gap-3 ${isCopied("tags") ? 'border-cyan-500/50' : 'border-white/5'}`}>
+                         <label className="flex items-center gap-4 text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]"><Hash className="w-5 h-5 text-indigo-500" /> Latent Semantic Tags</label>
+                         <div className={`group relative bg-slate-950/80 border rounded-[2.5rem] p-8 flex flex-wrap gap-3 ${isCopied("tags") ? 'border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.1)]' : 'border-white/5 shadow-inner'}`}>
                            {youtubeMetadata.tags.split(/\s+/).map((tag, i) => (
-                             <span key={i} className="px-5 py-3 bg-slate-800 text-indigo-400 rounded-2xl text-xs font-black border border-white/5">#{tag.replace('#','')}</span>
+                             <span key={i} className="px-5 py-3 bg-slate-800 text-indigo-400 rounded-2xl text-xs font-black border border-white/5 shadow-lg">#{tag.replace('#','')}</span>
                            ))}
+                           <button onClick={() => copyToClipboard(youtubeMetadata.tags, "tags")} className="absolute top-6 right-6 p-4 opacity-0 group-hover:opacity-100 transition-all bg-slate-800 hover:bg-indigo-600 rounded-2xl text-slate-400 hover:text-white shadow-2xl">
+                             {isCopied("tags") ? <Check className="w-5 h-5 text-cyan-400" /> : <Copy className="w-5 h-5" />}
+                           </button>
                          </div>
                        </div>
                      </div>
                      <div className="space-y-5 h-full">
-                       <label className="flex items-center gap-4 text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]"><AlignLeft className="w-5 h-5 text-indigo-500" /> Viral Description</label>
-                       <div className={`group relative h-[calc(100%-3.5rem)] bg-slate-950/80 border rounded-[3rem] p-12 transition-all ${isCopied("desc") ? 'border-cyan-500/50' : 'border-white/5'}`}>
+                       <label className="flex items-center gap-4 text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]"><AlignLeft className="w-5 h-5 text-indigo-500" /> High-Engagement Narrative</label>
+                       <div className={`group relative h-[calc(100%-3.5rem)] bg-slate-950/80 border rounded-[3rem] p-12 transition-all ${isCopied("desc") ? 'border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.05)]' : 'border-white/5 shadow-inner'}`}>
                           <p className={`text-[15px] leading-relaxed whitespace-pre-wrap font-bold h-full max-h-[450px] overflow-y-auto custom-scrollbar pr-8 ${isCopied("desc") ? 'text-cyan-100' : 'text-slate-400'}`}>{youtubeMetadata.description}</p>
                           <button onClick={() => copyToClipboard(youtubeMetadata.description, "desc")} className="absolute top-8 right-8 p-4 opacity-0 group-hover:opacity-100 transition-all bg-slate-800 hover:bg-indigo-600 rounded-2xl text-slate-400 hover:text-white shadow-2xl">
                              {isCopied("desc") ? <Check className="w-5 h-5 text-cyan-400" /> : <Copy className="w-5 h-5" />}
@@ -606,15 +599,14 @@ const Preview: React.FC<PreviewProps> = ({ config }) => {
         </div>
       )}
 
-      {/* Empty State */}
       {!isLoading && !storyBlueprint && sceneResults.length === 0 && (
         <div className="py-48 flex flex-col items-center justify-center text-center space-y-10 bg-gradient-to-b from-slate-900/40 to-indigo-950/20 rounded-[5rem] border-2 border-dashed border-white/5 shadow-2xl">
            <div className="w-28 h-28 bg-slate-900 rounded-[3rem] flex items-center justify-center shadow-inner ring-1 ring-white/5 animate-float">
              <Workflow className="w-12 h-12 text-indigo-500" />
            </div>
            <div className="space-y-4">
-             <h3 className="text-2xl font-black text-slate-300 uppercase tracking-[0.3em]">ASWRXXX Video Short Intelligence</h3>
-             <p className="text-slate-500 font-bold max-w-sm text-lg">Unggah video referensi untuk mulai menganalisis alur cerita secara mendalam.</p>
+             <h3 className="text-2xl font-black text-slate-300 uppercase tracking-[0.3em]">Ready for Analysis</h3>
+             <p className="text-slate-500 font-bold max-w-sm text-lg text-center">Tarik video referensi Anda untuk memicu algoritma dekonstruksi alur cerita.</p>
            </div>
         </div>
       )}

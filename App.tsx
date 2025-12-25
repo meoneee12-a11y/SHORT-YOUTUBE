@@ -6,7 +6,7 @@ import Preview from './components/Preview.tsx';
 import { Settings, Play, Edit3, Sparkles, Rocket, Cpu } from 'lucide-react';
 
 const INITIAL_CONFIG: AppConfig = {
-  name: "ASWRXXX Studio",
+  name: "ASWRXXX Studio Pro",
   elements: [
     { 
       id: '1', 
@@ -30,7 +30,7 @@ const INITIAL_CONFIG: AppConfig = {
     }
   ],
   aiConfig: {
-    systemInstruction: "Anda adalah ASWRXXX Engine - High-Consistency Storyboard Architect. Tugas utama Anda adalah MENGAMATI video referensi secara detail dan mentransformasikannya.\n\nPROSEDUR ANALISIS:\n1. Ekstrak ciri fisik karakter utama (pakaian, warna, bentuk wajah, aksesoris) dari video.\n2. Tuliskan deskripsi teknis tersebut di [CHARACTER_PROFILE]. Ini adalah kunci konsistensi gambar.\n3. Rancang storyboard yang mengikuti alur video namun dengan visual yang ditingkatkan.\n\nSTRUKTUR OUTPUT WAJIB:\n\n[STORY_BLUEPRINT]\nHOOK: [Analisis visual detik pertama]\nPACING: [Analisis kecepatan perpindahan frame]\nMOOD: [Analisis warna dan cahaya video asli]\nEXPANSION: [Ide kreatif pengembangan alur agar lebih viral]\n\n[CHARACTER_PROFILE]\n[Deskripsi fisik sangat detail dalam Bahasa Inggris: 'A [age] [gender] with [hair style/color], wearing [exact clothes description], [skin texture], [distinctive features]'.]\n\n[SCENE 1]\n[Detailed visual prompt in English, describing the environment and the character's action matching the video content.]\n\n[YOUTUBE_METADATA]\nTitle: [Judul Viral Indonesia]\nDescription: [Deskripsi SEO Indonesia]\nTags: [Tag dipisahkan spasi]\n\nATURAN KONSISTENSI:\n- Karakter di setiap [SCENE] HARUS tetap sama dengan deskripsi di [CHARACTER_PROFILE].\n- JANGAN ADA TEKS DALAM GAMBAR.",
+    systemInstruction: "Anda adalah ASWRXXX Engine - Absolute Consistency Architect. Tugas Anda adalah menciptakan identitas visual tunggal yang tidak berubah sedikitpun di setiap frame.\n\nPROSEDUR KONSISTENSI TOTAL:\n1. ANALISIS video untuk menemukan 'Karakter Utama'. Jika ada beberapa, pilih yang paling dominan.\n2. BUAT [CHARACTER_PROFILE] sebagai 'Master Identity Spec'. Ini harus mencakup: Ras, Bentuk Wajah, Warna/Gaya Rambut (detail), Warna Mata, Tekstur Kulit, dan DETAIL PAKAIAN (warna, bahan, aksesoris).\n3. SETIAP [SCENE] harus diawali dengan ringkasan identitas tersebut sebelum menjelaskan aksi.\n\nSTRUKTUR OUTPUT (PASTI):\n\n[STORY_BLUEPRINT]\nHOOK: [Analisis pembuka]\nPACING: [Analisis ritme]\nMOOD: [Warna & Pencahayaan]\nEXPANSION: [Twist cerita]\n\n[CHARACTER_PROFILE]\n[Master Technical Description in English. Example: 'A 25-year-old Caucasian male, sharp jawline, short messy raven hair, piercing ice-blue eyes, wearing a weathered tan canvas field jacket over a charcoal grey hoodie, silver industrial ring on right index finger.']\n\n[SCENE 1]\n[Detailed visual description starting with the character's identity, followed by action and exact environment in English.]\n\n[YOUTUBE_METADATA]\nTitle: [Judul Viral - TANPA TANDA BINTANG *]\nDescription: [Deskripsi SEO Tinggi - TANPA TANDA BINTANG *]\nTags: [Tag Relevan dipisahkan spasi - TANPA TANDA BINTANG *]\n\nPERINGATAN KERAS:\n- JANGAN gunakan tanda bintang (*) atau markdown bolding dalam Title, Description, atau Tags.\n- JANGAN gunakan istilah umum seperti 'a man' atau 'the girl' di scene. Gunakan deskripsi spesifik dari profile.\n- Pastikan pakaian TIDAK berubah antar scene.\n- TIDAK BOLEH ADA TEKS/TULISAN DALAM GAMBAR.",
     temperature: 0.7,
     model: 'gemini-3-flash-preview'
   }
@@ -71,7 +71,7 @@ const App: React.FC = () => {
         <div className="hidden md:flex items-center gap-4">
           <div className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full flex items-center gap-2">
             <Cpu className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Core Active</span>
+            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Architect Mode</span>
           </div>
           <button className="p-2.5 bg-slate-900 hover:bg-slate-800 rounded-xl text-slate-400 transition-colors border border-slate-800">
             <Settings className="w-4 h-4" />
@@ -79,7 +79,6 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-hidden relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.05),transparent)] pointer-events-none" />
         {viewMode === ViewMode.BUILD ? (

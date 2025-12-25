@@ -29,14 +29,7 @@ export const generateAIResponse = async (prompt: string, config: AIConfig, video
     return response.text;
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    // Extract meaningful error if possible
-    const status = error?.status || "Unknown Status";
     const message = error?.message || "Internal Engine Error";
-    
-    if (status === "INTERNAL" || status === 500) {
-      return `Error: The AI engine encountered a complex request and timed out. Try a smaller video file or request fewer scenes.`;
-    }
-    
     return `Error: ${message}`;
   }
 };
@@ -45,16 +38,17 @@ export const generateSceneImage = async (prompt: string, stylePrompt: string, ch
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    // Strict prompt to ensure character consistency and NO text
-    const fullPrompt = `TASK: Generate a high-quality visual for a cinematic storyboard.
-SCENE: ${prompt}
-CHARACTER CONSISTENCY: ${characterProfile}
-STYLE: ${stylePrompt}
+    // Obsessive consistency engineering
+    const fullPrompt = `IMAGE GENERATION MASTER COMMAND:
+MAIN SUBJECT IDENTITY (MANDATORY): ${characterProfile}
+SCENE DESCRIPTION: ${prompt}
+VISUAL STYLE: ${stylePrompt}
 
-MANDATORY RULES:
-1. NO TEXT, NO LETTERS, NO NUMBERS, NO CAPTIONS, NO SUBTITLES, NO WATERMARKS in the image.
-2. Ensure the main character exactly matches the description: ${characterProfile}.
-3. The image must be purely visual and cinematic.`;
+CORE CONSTRAINTS:
+- YOU MUST MAINTAIN 100% IDENTITY CONSISTENCY. The subject in this image must be EXACTLY the same person as defined in the IDENTITY SPEC above.
+- NO DEVIATION in clothing color, hair style, or facial features.
+- ABSOLUTELY NO TEXT, NO LOGOS, NO WATERMARKS, NO SUBTITLES.
+- Cinematic lighting, professional composition, photorealistic textures.`;
     
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
